@@ -1,5 +1,6 @@
 const AllPatients = require("../../models/patientSchema")
 const bcrypt = require("bcrypt")
+const generateToken = require("../../utils/token")
 
 
 
@@ -61,8 +62,14 @@ async function patientLogin(req, res) {
         const dehashedPwd = bcrypt.compare(password, AllPatients.password)
         if (!dehashedPwd) {
             res.status(400).json({ message: "Password Is Incorrect" })
+            const data = {
+                email: AllPatients.email,
+                username: AllPatients.username
+            }
         }
-        return res.status(200).json({ message: "Login was successful!" })
+        // Create web token
+        const token = await generateToken(data)
+        return res.status(200).json({ message: "Login was successful!" }, token)
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "error" });
