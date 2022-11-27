@@ -1,42 +1,45 @@
 const AllPatients = require("../../models/patientSchema")
 const bcrypt = require("bcrypt")
-const generateToken = require("../../utils/token")
+const { generateToken } = require("../../utils/token")
 
 
 
 async function patientSignup(req, res) {
-    const { firstname, lastname, username, email, phone_number, hiv_status, drug_dosage1, drug_dosage2, nationality, state, city, password, retype_password } = req.body
+    const { first_name, last_name, username, email, phone_number, hiv_status, drug_dosage, time_of_dosage1, time_of_dosage2, nationality, state, city, password } = req.body;
     try {
-        const checkusernameunique = AllPatients.findOne({ username: username });
-        if (checkusernameunique) {
-            res.status(400).json({ message: "This Username Is Already Taken" })
+        const checkUsernameUnique = await AllPatients.findOne({ username: username });
+        if (checkUsernameUnique) {
+            return res.status(400).json({ message: "This Username Is Already Takenn" })
         }
-        const checkemailunique = AllPatients.findOne({ email: email });
-        if (checkemailunique) {
-            res.status(400).json({ message: "This Username Is Already Taken" })
+        const checkEmailUnique = await AllPatients.findOne({ email: email });
+        if (checkEmailUnique) {
+            return res.status(400).json({ message: "This Email Is Already Taken" })
         }
-        const checkphone_numberunique = AllPatients.findOne({ phone_number: phone_number });
-        if (checkphone_numberunique) {
-            res.status(400).json({ message: "This Username Is Already Taken" })
+        const checkPhoneNumberUnique = await AllPatients.findOne({ phone_number: phone_number });
+        if (checkPhoneNumberUnique) {
+            return res.status(400).json({ message: "This Phone Number Is Already Taken" })
         }
-        if (password != retype_password) {
-            res.status(401).json({ message: "Passwords Do Not Match" })
-        }
+        // if (password !== retype_password) {
+        //     res.status(401).json({ message: "Passwords Do Not Match" })
+        // }
+
         let salt = await bcrypt.genSalt();
         const hashedPwd = await bcrypt.hash(password, salt)
+
         if (!hashedPwd) {
-            res.status(400).json({ message: "Something Went Wrong!" })
+            return res.status(400).json({ message: "Something Went Wrong!" })
         }
 
         await AllPatients.create({
-            firstname: firstname,
-            lastname: lastname,
+            firstname: first_name,
+            lastname: last_name,
             username: username,
             email: email,
             phone_number: phone_number,
             hiv_status: hiv_status,
-            drug_dosage1: drug_dosage1,
-            drug_dosage2: drug_dosage2,
+            drug_dosage: drug_dosage,
+            time_of_dosage1: time_of_dosage1,
+            time_of_dosage2: time_of_dosage2,
             nationality: nationality,
             state: state,
             city: city,
@@ -47,7 +50,7 @@ async function patientSignup(req, res) {
 
     } catch (error) {
         console.log(error)
-        res.status(500).json({ mesaage: "error occured" })
+        return res.status(500).json({ mesaage: "error occured" })
     }
 }
 
@@ -55,19 +58,18 @@ async function patientSignup(req, res) {
 async function patientLogin(req, res) {
     const { email, password } = req.body;
     try {
-        const checkpatienceexist = AllPatients.findOne({ email: email })
-        if (!checkpatienceexist) {
+        const checkPatienceexist = AllPatients.findOne({ email: email })
+        if (!checkPatienceexist) {
             res.status(400).json({ message: "Email Does Not Exist!" })
         }
-        const dehashedPwd = bcrypt.compare(password, AllPatients.password)
-        if (!dehashedPwd) {
-            res.status(400).json({ message: "Password Is Incorrect" })
-            const data = {
-                email: AllPatients.email,
-                username: AllPatients.username
-            }
+        const dehashedPwd = bcrypt.compare(password, checkPatienceexist.password)
+        if (!dehashedPwd) { res.status(400).json({ message: "Password Is Incorrect" }) }
+
+        const data = {
+            userId: checkPatienceexist._id,
+            username: checkPatienceexist.username
         }
-        // Create web token
+        // Create web token and send to user
         const token = await generateToken(data)
         return res.status(200).json({ message: "Login was successful!" }, token)
     } catch (error) {
@@ -79,4 +81,30 @@ async function patientLogin(req, res) {
 
 
 
-module.exports = [patientSignup, patientLogin]
+module.exports = { patientSignup, patientLogin }
+
+
+
+
+
+
+
+
+
+
+
+// {
+//     "first_name": "Thelma",
+//     "last_name": "Chimdi",
+//     "username": "friday",
+//     "email": "Thelmachi@gmail.com",
+//     "phone_number": 1234567323,
+//     "hiv_status": "positive",
+//     "drug_dosage": "Ones",
+//     "time_of_dosage1": "2022-11-02",
+//     "time_of_dosage2": "2022-11-02",
+//     "nationality": "Nigeria",
+//     "state": "Ogun",
+//     "city": "Ogoni",
+//     "password": "2112"
+// }

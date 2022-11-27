@@ -21,6 +21,6 @@ app.get("", getData)
 
 
 app.listen(3000, () => {
-    console.log('Connection To Database Successful'),
+    console.log('Server Is Running'),
         ConnectDatabase()
 })
